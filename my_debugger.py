@@ -26,7 +26,7 @@ class debugger():
         #Initialize variable cb indicating the size of startupinfo
         startupinfo.cb = sizeof(startupinfo)
 
-        if kernel32.CreatProcessA(  
+        if kernel32.CreateProcessA(  
                                 pass_to_exe,
                                 None,
                                 None,
