@@ -5,14 +5,16 @@ kernel32 = windll.kernel32
 
 class debugger():
     def __init__(self):
-        pass
+        self.h_process          =   None
+        self.pid                =   None
+        self.debugger_active    =   False
 
     def load(self, pass_to_exe):
 
         #dwCreateFlags determines how the process creates
         #If you want to see the calculator GUI
         #creation_flags = CREATE_NEW_CONSOLE
-        creation_flags = DEBUG_PROSESS
+        creation_flags = DEBUG_PROCESS
 
         #Instantiate structure
         startupinfo = STARTUPINFO()
@@ -41,5 +43,57 @@ class debugger():
             print("[*] We have successfully launched the process!")
             print("[*] PID: %d" % process_information.dwProcessId)
 
+            #Get process handle and save for future use
+            self.h_process = self.open_process(process_information.dwProcessId)
+
         else:
             print("Error: 0x%08x." % kernel32.GetLastError)
+
+
+    def open_process(self, pid):
+
+        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
+        return h_process
+
+
+    def attach(self, pid):
+
+        self.h_process = self.open_process(pid)
+
+        if kernel32.DebugActiveProcess(pid):
+            self.debugger_active = True
+            self.pid             = int(pid)
+        else:
+            print "[*] Unable to attach to the process."
+
+
+    def run(self):
+
+        while self.debugger_active == True:
+            self.get_debug_event()
+
+
+    def get_debug_event(self):
+
+        debug_event     = DEBUG_EVENT()
+        continue_status = DBG_CONTINUE
+
+        if kernel32.WaitForDebugEvent(byref(debug_event), INFINITE):
+
+            raw_input("Press a key to continue...")
+            self.debugger_active = False
+            kernel32.ContinueDebugEvent(
+                debug_event.dwProcessId,
+                debug_event.dwThreadId,
+                continue_status
+            )
+
+    
+    def detach(self):
+
+        if kernel32.DebugActiveProcessStop(self.pid):
+            print "[*] Finished debuging. Exiting..."
+            return True
+        else:
+            print "There was an error"
+            return False
