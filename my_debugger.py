@@ -57,9 +57,10 @@ class debugger():
 
 
     def attach(self, pid):
-
+        #get process handle from PID & save it
         self.h_process = self.open_process(pid)
 
+        #pass PID and get control
         if kernel32.DebugActiveProcess(pid):
             self.debugger_active = True
             self.pid             = int(pid)
@@ -110,25 +111,31 @@ class debugger():
             return False
 
     def enumerate_threads(self):
+        #structure for information of thread 
         thread_entry = THREADENTRY32()
         thread_list = []
+        #Collect all threads in the system and save the handle of snapshot
         snapshot = kernel32.CreateToolhelp32Snapshot(
             TH32CS_SNAPTHREAD, self.pid
         )
 
         if snapshot is not None:
             thread_entry.dwSize = sizeof(thread_entry)
+            #information of thread which is found first is stored in thread_entry 
             success = kernel32.Thread32First(snapshot, byref(thread_entry))
 
             while success:
+                #compare self.PID and PID of the process to which the thread belongs
                 if thread_entry.th32OwnerProcessID == self.pid:
                     thread_list.append(thread_entry.th32ThreadID)
                 success = kernel32.Thread32Next(snapshot, byref(thread_entry))
 
             kernel32.CloseHandle(snapshot)
+            #return a list of TID
             return thread_list
 
     def get_thread_context(self, thread_id=None, h_thread=None):
+        #structure for information of context
         context = CONTEXT()
         context.ContextFlag = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS
 
