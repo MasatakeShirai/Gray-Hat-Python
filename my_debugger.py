@@ -90,6 +90,7 @@ class debugger():
             self.context = self.get_thread_context(h_thread=self.h_thread)
             print "Event Code: %d Thread ID: %d" % (debug_event.dwDebugEventCode, debug_event.dwThreadId)
 
+            #Continue investigating if the event code indicates an exception
             if debug_event.dwDebugEventCode == EXCEPTION_DEBUG_EVENT:
 
                 exception = debug_event.u.Exception.ExceptionRecord.ExceptionCode
@@ -98,6 +99,7 @@ class debugger():
                 if exception == EXCEPTION_ACCESS_VIOLATION:
                     print "Access Violation Detected."
 
+                #if it is breakpoint, call internal handler
                 elif exception == EXCEPTION_BREAKPOINT:
                     continue_status = self.exception_handler_breakpoint()
 
