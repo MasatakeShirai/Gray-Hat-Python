@@ -179,6 +179,7 @@ class debugger():
         print "Exception Adress: 0x%08x" % self.exception_address
         return DBG_CONTINUE
 
+    #read memory
     def read_process_memory(self,address,length):
         data     =   ""
         read_buf =  create_string_buffer(length)
@@ -195,8 +196,9 @@ class debugger():
             data    += read_buf.raw
             return data
 
+    #write memory
     def write_process_memory(self,address,data):
-        count   = c_long(0)
+        count   = c_ulong(0)
         length  = len(data)
 
         c_data  = c_char_p(data[count.value:])
@@ -211,20 +213,27 @@ class debugger():
         else:
             return True
 
+    #set software breakpoint
     def bp_set_sw(self,address):
         print "[*]Setting breakpoint at: 0x%08x" % address
         if not self.software_breakpoints.has_key(address):
             try:
+                #Store original byte sequence
                 original_byte = self.read_process_memory(address, 1)
+                #write an interrupt instruction
                 self.write_process_memory(address, "\xCC")
+                #add breakpoint to list
                 self.software_breakpoints[address] = (original_byte)
             except:
                 return False
 
         return True
 
+    #returns the address of a function
     def func_resolve(self,dll,function):
+        #get handle of module containing the desired function
         handle  = kernel32.GetModuleHandleA(dll)
+        #get adress of the desired function 
         address = kernel32.GetProcAddress(handle, function)
         kernel32.CloseHandle(handle)
         return address
