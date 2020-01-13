@@ -233,8 +233,17 @@ class debugger():
     def func_resolve(self,dll,function):
         #get handle of module containing the desired function
         handle  = kernel32.GetModuleHandleA(dll)
+        if  handle == 0:
+            print WinError(GetLastError())
+            return False
+
         #get adress of the desired function 
-        address = kernel32.GetProcAddress(handle, function)
+        address = kernel32.GetProcAddress(handle, function)       
+        if  address == 0:
+            print WinError(GetLastError())
+            kernel32.CloseHandle(handle)
+            return False    
+
         kernel32.CloseHandle(handle)
         return address
 
